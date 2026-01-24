@@ -1,0 +1,186 @@
+# --- Common settings ---
+x-lsiodefaults: &lsio-defaults # Define a reusable template
+  restart: unless-stopped
+  environment:
+    - PUID=1000
+    - PGID=1000
+    - TZ=Europe/Amsterdam
+
+services:
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    ports:
+      # Disable port 53 on the host if you are running another DNS server there
+      # sudo systemctl stop systemd-resolved
+      # sudo systemctl disable systemd-resolved.service
+      # DNS Ports
+      - "192.168.0.45:53:53/tcp"
+      - "192.168.0.45:53:53/udp"
+      # Default HTTP Port
+      - "80:80/tcp"
+      # Default HTTPs Port. FTL will generate a self-signed certificate
+      - "443:443/tcp"
+      # Uncomment the line below if you are using Pi-hole as your DHCP server
+      #- "67:67/udp"
+      # Uncomment the line below if you are using Pi-hole as your NTP server
+      #- "123:123/udp"
+    environment:
+      # Set the appropriate timezone for your location (https://en.wikipedia.org/wiki/List_of_tz_database_time_zones), e.g:
+      TZ: 'Europe/Amsterdam'
+      # Set a password to access the web interface. Not setting one will result in a random password being assigned
+      FTLCONF_webserver_api_password: 'correct horse battery staple apple'
+      # If using Docker's default `bridge` network setting the dns listening mode should be set to 'ALL'
+      FTLCONF_dns_listeningMode: 'ALL'
+      # Optional: Delay Pi-hole startup to wait for other services. Value is in seconds
+      FTLCONF_misc_delay_startup: 10
+    # Volumes store your data between container upgrades
+    volumes:
+      # For persisting Pi-hole's databases and common configuration file
+      - './etc-pihole:/etc/pihole'
+      # Uncomment the below if you have custom dnsmasq config files that you want to persist. Not needed for most starting fresh with Pi-hole v6. If you're upgrading from v5 you and have used this directory before, you should keep it enabled for the first v6 container start to allow for a complete migration. It can be removed afterwards. Needs environment variable FTLCONF_misc_etc_dnsmasq_d: 'true'
+      #- './etc-dnsmasq.d:/etc/dnsmasq.d'
+    #cap_add:
+      # See https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
+      # Required if you are using Pi-hole as your DHCP server, else not needed
+      #- NET_ADMIN
+      # Required if you are using Pi-hole as your NTP client to be able to set the host's system time
+      #- SYS_TIME
+      # Optional, if Pi-hole should get some more processing time
+      #- SYS_NICE
+    restart: unless-stopped
+
+  ##############################
+  #                            #
+  # --- ARR STACK SERVICES --- #
+  #                            #
+  ##############################
+  # --- Indexer Manager ---
+  prowlarr:
+    <<: *lsio-defaults # Use the reusable template
+    image: lscr.io/linuxserver/prowlarr:2.3.0.5236-ls135 # linuxserver/prowlarr:latest
+    container_name: prowlarr
+    volumes:
+      - ./config/prowlarr:/config
+    ports:
+      - 9696:9696
+
+ # --- Download client ---
+  jellyfin:
+    <<: *lsio-defaults # Use the reusable template
+    image: lscr.io/linuxserver/jellyfin:10.11.6ubu2404-ls17 # linuxserver/jellyfin:latest
+    container_name: jellyfin
+    volumes:
+      - ./config/jellyfin:/config
+      - /mnt/nas_streaming:/data
+    devices:
+      - /dev/dri:/dev/dri      # CRITICAL: This enables hardware acceleration for the CPU
+    ports:
+      - 8096:8096
+
+# --- Search provider ---
+  jellyseerr:
+    <<: *lsio-defaults # Use the reusable template
+    image: fallenbagel/jellyseerr:2.7.3 # fallenbagel/jellyseerr:latest
+    container_name: jellyseerr
+    volumes:
+      - ./config/jellyseerr:/app/config
+    ports:
+      - 5055:5055
+
+# --- Movies manager ---
+  radarr:
+    <<: *lsio-defaults # Use the reusable template
+    image: lscr.io/linuxserver/radarr:6.0.4.10291-ls290 # linuxserver/radarr:latest
+    container_name: radarr
+    volumes:
+      - ./config/radarr:/config
+      - /mnt/nas_streaming:/data
+    ports:
+      - 7878:7878
+
+# --- Shows manager ---
+  sonarr:
+    <<: *lsio-defaults # Use the reusable template
+    image: lscr.io/linuxserver/sonarr:4.0.16.2944-ls301 # linuxserver/sonarr:latest
+    container_name: sonarr
+    volumes:
+      - ./config/sonarr:/config
+      - /mnt/nas_streaming:/data
+    ports:
+      - 8989:8989
+
+# --- Subtitle manager ---
+  bazarr:
+    <<: *lsio-defaults # Use the reusable template
+    image: lscr.io/linuxserver/bazarr:v1.5.4-ls332 # linuxserver/bazarr:latest
+    container_name: bazarr
+    volumes:
+      - ./config/bazarr:/config
+      - /mnt/nas_streaming:/data
+    ports:
+      - 6767:6767
+
+# --- Download client ---
+  nzbget:
+    <<: *lsio-defaults # Use the reusable template
+    image: lscr.io/linuxserver/nzbget:v25.4-ls226 # lscr.io/linuxserver/nzbget:latest
+    container_name: nzbget
+    volumes:
+      - ./config/nzbget:/config # Configuration files
+      - /mnt/nas_streaming:/data # The final media storage location
+      - ./nzbget/intermediate:/scratch # The SSD (Fast) download folder for unpacking
+    ports:
+      - 6789:6789
+
+# --- Arr stack dashboard ---
+  homepage:
+    <<: *lsio-defaults # Use the reusable template
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    ports:
+      - 3000:3000
+    volumes:
+      - ./config/homepage:/app/config
+      - /var/run/docker.sock:/var/run/docker.sock:ro # Allows it to show if containers are running
+      - /mnt/nas_streaming:/nas # Optional: Allows it to show disk usage of media drives
+      - /sys/class/hwmon:/sys/class/hwmon:ro  # Optional: Allows it to show CPU temperature
+    environment:
+      - HOMEPAGE_ALLOWED_HOSTS=192.168.0.45:3000
+
+  ##############################
+  #                            #
+  # --- SYSTEM SERVICES ---    #
+  #                            #
+  ##############################
+  # --- System monitoring ---
+  glances:
+      <<: *lsio-defaults # Use the reusable template
+      image: nicolargo/glances:latest-full
+      container_name: glances
+      pid: host # Required to see host processes/temp
+      ports:
+        - 61208:61208
+      environment:
+        - GLANCES_OPT=-w
+
+  # --- Speedtest Tracker ---
+  # Default username/password admin@example.com/password
+  speedtest-tracker:
+    <<: *lsio-defaults # Use the reusable template
+    container_name: speedtest-tracker
+    image: lscr.io/linuxserver/speedtest-tracker:latest
+    ports:
+      - 8080:80
+      - 8443:443
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+      - APP_KEY=base64:yxaQnly5RNl0IuiYXlT6QzFnUwfFbLnHeIpXpeniRhM=
+      - APP_URL=http://192.168.0.45:8080
+      - DB_CONNECTION=sqlite
+      - SPEEDTEST_SCHEDULE=0 */6 * * * # Runs every 6 hours
+      - DISPLAY_TIMEZONE=Europe/Amsterdam
+    volumes:
+      - ./speedtest-config:/config

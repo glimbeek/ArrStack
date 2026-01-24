@@ -1,0 +1,30 @@
+---
+# For configuration options and examples, please see:
+# https://gethomepage.dev/configs/info-widgets/
+
+# For cputemp to work, you may need to install 'lm-sensors' on your host system
+# and enable sensor monitoring in your Docker server settings.
+# sudo apt update && sudo apt install lm-sensors -y
+# sudo sensors-detect --auto
+
+- glances:
+    url: http://192.168.0.45:61208
+    version: 4
+    label: "system"
+    cpu: true
+    cputemp: true
+    memory: true
+    uptime: true
+    disk: /
+    expanded: true
+
+- resources:
+    label: network
+    network: true
+
+- resources:
+    label: storage
+    disk:
+        - /     # This monitors your VM's local OS drive
+        - /nas  # This monitors your NAS mount
+    expanded: true
