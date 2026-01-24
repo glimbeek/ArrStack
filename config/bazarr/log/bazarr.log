@@ -1,9 +1,0 @@
-2026-01-19 08:40:50|INFO    |root                            |Scheduler will use this timezone: Europe/Amsterdam|
-2026-01-19 08:41:02|INFO    |root                            |Interactive jobs queue started and waiting for tasks|
-2026-01-19 08:41:02|INFO    |root                            |BAZARR trying to connect to Sonarr SignalR feed...|
-2026-01-19 08:41:02|INFO    |waitress                        |BAZARR is started and waiting for requests on: http://***.***.***.***:6767|
-2026-01-19 08:41:03|INFO    |root                            |BAZARR trying to connect to Radarr SignalR feed...|
-2026-01-19 08:41:03|INFO    |waitress                        |BAZARR is started and waiting for requests on: http://[::]:6767|
-2026-01-19 08:41:03|INFO    |root                            |BAZARR SignalR client for Radarr is connected and waiting for events.|
-2026-01-19 08:41:03|INFO    |root                            |BAZARR SignalR client for Sonarr is connected and waiting for events.|
-2026-01-19 08:49:38|ERROR   |root                            |BAZARR SignalR client for Radarr connection as been lost. Trying to reconnect...|
