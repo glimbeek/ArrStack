@@ -105,12 +105,18 @@ echo "Starting Docker backup: $DATE"
 cd "$SOURCE_DIR"
 docker compose stop
 
-# 2. Sync the raw files (for quick browsing/restore)
-# rsync only copies what changed since yesterday
-rsync -av --delete "$SOURCE_DIR/" "$BACKUP_DEST/latest_sync/"
+# 2. Sync the raw files (Excluding Cache & Transcodes)
+# --exclude uses relative paths from the source
+rsync -av --delete \
+    --exclude='**/cache' \
+    --exclude='**/Transcodes' \
+    "$SOURCE_DIR/" "$BACKUP_DEST/latest_sync/"
 
-# 3. Create a compressed archive (for historical recovery)
-tar -czf "$BACKUP_DEST/docker_backup_$DATE.tar.gz" -C "$SOURCE_DIR" .
+# 3. Create a compressed archive (Excluding Cache & Transcodes)
+tar -czf "$BACKUP_DEST/docker_backup_$DATE.tar.gz" \
+    --exclude='*/cache' \
+    --exclude='*/Transcodes' \
+    -C "$SOURCE_DIR" .
 
 # 4. Restart containers
 docker compose start
@@ -119,14 +125,6 @@ docker compose start
 find "$BACKUP_DEST" -name "docker_backup_*.tar.gz" -type f -mtime +$RETENTION_DAYS -delete
 
 echo "Backup complete. Containers restarted."
-
-# 3. Make the script it executable
-chmod +x /home/glimby/docker/backup_docker.sh
-
-# 4. Automate with Systemd Timer
-
-# 1. Create the .sh file for the service
-sudo nano /etc/systemd/system/docker-backup.service
 
 # 2. Copy paste this in the file
 [Unit]
