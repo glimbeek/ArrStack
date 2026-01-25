@@ -1,172 +1,233 @@
-## Installation Requirements (Bare Metal Host)
-Before running `docker compose up -d`, ensure the following are installed on the Ubuntu host:
+# Docker Homelab – Bare Metal Setup (Ubuntu)
 
-### 1. Update and Install Core Tools
-# 1. Update package list
-sudo apt update && sudo apt upgrade -y
+## Table of Contents
+1. Installation Requirements
+2. System Preparation
+3. Install Docker & Docker Compose
+4. Project Directory Setup
+5. Intel Media Drivers (Optional)
+6. Telegram Docker Control Bot
+7. Docker Backup (systemd + timer)
+8. Useful Commands
 
-# 2. Install essential system tools
-sudo apt install -y openssh-server unzip nfs-common sysstat lm-sensors
+---
 
-# 3. Hardware Monitoring & GPU Support (Crucial for Glances/Jellyfin)
-# intel-gpu-tools replaces 'intel-media-va-driver' for monitoring
-sudo apt install -y intel-gpu-tools lm-sensors
-sudo sensors-detect  # Run this once and answer YES to all
+## Installation Requirements
 
-# 4. PowerShell
-sudo apt install -y powershell
+Before running docker compose up -d, ensure the following components are installed on the Ubuntu bare metal host.
 
-### 2. Install Docker
-# 1. Add Docker's official GPG key:
-sudo apt update
-sudo apt install ca-certificates curl
-sudo install -m 0755 -d /etc/apt/keyrings
-sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-sudo chmod a+r /etc/apt/keyrings/docker.asc
+---
 
-# 2. Add the repository to Apt sources:
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
-  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+## 1. System Preparation
 
-# 3. Install Docker Engine and the Compose Plugin
-sudo apt update
-sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+### 1.1 Update the System
 
-# 4. Add your user to the docker group (so you don't need 'sudo' for every command)
-sudo usermod -aG docker $USER
-# NOTE: Log out and log back in for this to take effect!
+    sudo apt update && sudo apt upgrade -y
 
-# 5. Start and enable the SMART daemon for drive health monitoring
-sudo systemctl enable --now smartd
+### 1.2 Install Core Utilities
 
-# Create the project directory
-mkdir -p ~/docker
+    sudo apt install -y \
+      openssh-server \
+      unzip \
+      nfs-common \
+      sysstat \
+      lm-sensors
 
-# Set ownership to your user (PUID 1000)
-sudo chown -R $USER:$USER ~/docker
+### 1.3 Hardware Monitoring & Intel GPU Support
 
-### 5. Install drivers <-- I this needed?
-# Install Intel Media drivers
-sudo apt install -y intel-media-va-driver-non-free vainfo
+Required for Glances and Intel GPU visibility.  
+intel-gpu-tools replaces intel-media-va-driver for monitoring only.
 
-# Verify the GPU is visible (You should see 'renderD128' in the output)
-ls -l /dev/dri
+    sudo apt install -y intel-gpu-tools lm-sensors
+    sudo sensors-detect
 
-### 3. Setup the Telegram Bot
-# 1. Create the service
-sudo nano /etc/systemd/system/tgbot.service
+Run sensors-detect once and answer YES to all questions.
 
-# 2. Add the script
-[Unit]
-Description=Telegram Docker Control Bot
-After=docker.service
+### 1.4 Install PowerShell
 
-[Service]
-Type=simple
-ExecStart=/opt/microsoft/powershell/7/pwsh -File /home/glimby/docker/telegram_bot.ps1
-Restart=always
-RestartSec=10
-User=glimby
-WorkingDirectory=/home/glimby/docker
+    sudo apt install -y powershell
 
-[Install]
-WantedBy=multi-user.target
+---
 
-# 3. Reload the systemd daemon to see the new file
-sudo systemctl daemon-reload
+## 2. Install Docker & Docker Compose
 
-# 4. Start the bot
-sudo systemctl start tgbot
+### 2.1 Add Docker GPG Key
 
-### 4. Create a backup cronjob
-# To run the job manually run the following command
-# Since the script stops your containers, your media stack will go offline for a minute or two.
-sudo systemctl start docker-backup.service
-# To watch exactly what's happening open a second terminal window and run:
-journalctl -u docker-backup.service -f
+    sudo apt update
+    sudo apt install -y ca-certificates curl
+    sudo install -m 0755 -d /etc/apt/keyrings
+    sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+      -o /etc/apt/keyrings/docker.asc
+    sudo chmod a+r /etc/apt/keyrings/docker.asc
 
-# 1. Create the .sh file for the backup script:
-nano /home/glimby/docker/backup_docker.sh
+### 2.2 Add Docker Repository
 
-# 2. Copy paste this in the file
-#!/bin/bash
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] \
+    https://download.docker.com/linux/ubuntu \
+    $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+    sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-# --- CONFIGURATION ---
-SOURCE_DIR="/home/glimby/docker"
-BACKUP_DEST="/mnt/nas_streaming/Backups/DockerContainers"
-DATE=$(date +%Y-%m-%d_%H%M)
-RETENTION_DAYS=30
+### 2.3 Install Docker Engine & Compose Plugin
 
-echo "Starting Docker backup: $DATE"
+    sudo apt update
+    sudo apt install -y \
+      docker-ce \
+      docker-ce-cli \
+      containerd.io \
+      docker-buildx-plugin \
+      docker-compose-plugin
 
-# 1. Stop containers (ensures database integrity)
-cd "$SOURCE_DIR"
-docker compose stop
+### 2.4 Docker Post-Install Steps
 
-# 2. Sync the raw files (Excluding Cache & Transcodes)
-# --exclude uses relative paths from the source
-rsync -av --delete \
-    --exclude='**/cache' \
-    --exclude='**/Transcodes' \
-    "$SOURCE_DIR/" "$BACKUP_DEST/latest_sync/"
+    sudo usermod -aG docker $USER
 
-# 3. Create a compressed archive (Excluding Cache & Transcodes)
-tar -czf "$BACKUP_DEST/docker_backup_$DATE.tar.gz" \
-    --exclude='*/cache' \
-    --exclude='*/Transcodes' \
-    -C "$SOURCE_DIR" .
+Log out and back in for this to take effect.
 
-# 4. Restart containers
-docker compose start
+Enable SMART monitoring:
 
-# 5. Cleanup: Delete archives older than 30 days
-find "$BACKUP_DEST" -name "docker_backup_*.tar.gz" -type f -mtime +$RETENTION_DAYS -delete
+    sudo systemctl enable --now smartd
 
-echo "Backup complete. Containers restarted."
+---
 
-# 2. Copy paste this in the file
-[Unit]
-Description=Daily Docker Backup to NAS
-After=network-online.target mnt-nas_streaming.mount
+## 3. Project Directory Setup
 
-[Service]
-Type=oneshot
-User=glimby
-ExecStart=/home/glimby/docker/backup_docker.sh
+    mkdir -p ~/docker
+    sudo chown -R $USER:$USER ~/docker
 
-[Install]
-WantedBy=multi-user.target
+---
 
-# 5. Create the timer job
-# 1. Create the .timer file
-sudo nano /etc/systemd/system/docker-backup.timer
+## 4. Intel Media Drivers (Optional)
 
-# 2. Copy paste this in the file
-[Unit]
-Description=Run Docker Backup Daily at 03:00:00
+Only required if Jellyfin hardware transcoding is used.
 
-[Timer]
-OnCalendar=*-*-* 03:00:00
-Persistent=true
+    sudo apt install -y intel-media-va-driver-non-free vainfo
 
-[Install]
-WantedBy=timers.target
+Verify GPU visibility:
 
-# 5. Activate the service
-sudo systemctl daemon-reload
-sudo systemctl enable --now docker-backup.timer
+    ls -l /dev/dri
 
-### Useful commands
-# Get Docker container versions based on common label keys
-for container in $(docker ps --format "{{.Names}}"); do 
-    echo -n "$container: "; 
-    docker inspect -f '{{if index .Config.Labels "org.opencontainers.image.version"}}{{index .Config.Labels "org.opencontainers.image.version"}}{{else if index .Config.Labels "version"}}{{index .Config.Labels "version"}}{{else if index .Config.Labels "build_version"}}{{index .Config.Labels "build_version"}}{{else}}No version label found{{end}}' "$container"; 
-done
+Expected output includes renderD128.
 
-# Get Docker container IP addresses
-for container in $(docker ps --format "{{.Names}}"); do
-    echo -n "$container: "; 
-    docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$container";
-done
+---
+
+## 5. Telegram Docker Control Bot
+
+Create the systemd service:
+
+    sudo nano /etc/systemd/system/tgbot.service
+
+Service contents:
+
+    [Unit]
+    Description=Telegram Docker Control Bot
+    After=docker.service
+
+    [Service]
+    Type=simple
+    ExecStart=/opt/microsoft/powershell/7/pwsh -File /home/glimby/docker/telegram_bot.ps1
+    Restart=always
+    RestartSec=10
+    User=glimby
+    WorkingDirectory=/home/glimby/docker
+
+    [Install]
+    WantedBy=multi-user.target
+
+Enable and start:
+
+    sudo systemctl daemon-reload
+    sudo systemctl enable --now tgbot
+
+---
+
+## 6. Docker Backup (systemd + timer)
+
+### Backup Script
+
+    nano /home/glimby/docker/backup_docker.sh
+
+Script contents:
+
+    #!/bin/bash
+    SOURCE_DIR="/home/glimby/docker"
+    BACKUP_DEST="/mnt/nas_streaming/Backups/DockerContainers"
+    DATE=$(date +%Y-%m-%d_%H%M)
+    RETENTION_DAYS=30
+
+    echo "Starting Docker backup: $DATE"
+
+    cd "$SOURCE_DIR"
+    docker compose stop
+
+    rsync -av --delete \
+      --exclude='**/cache' \
+      --exclude='**/Transcodes' \
+      "$SOURCE_DIR/" "$BACKUP_DEST/latest_sync/"
+
+    tar -czf "$BACKUP_DEST/docker_backup_$DATE.tar.gz" \
+      --exclude='*/cache' \
+      --exclude='*/Transcodes' \
+      -C "$SOURCE_DIR" .
+
+    docker compose start
+
+    find "$BACKUP_DEST" -name "docker_backup_*.tar.gz" -mtime +30 -delete
+
+    echo "Backup complete."
+
+Make executable:
+
+    chmod +x /home/glimby/docker/backup_docker.sh
+
+### systemd Service
+
+    sudo nano /etc/systemd/system/docker-backup.service
+
+    [Unit]
+    Description=Daily Docker Backup to NAS
+    After=network-online.target mnt-nas_streaming.mount
+
+    [Service]
+    Type=oneshot
+    User=glimby
+    ExecStart=/home/glimby/docker/backup_docker.sh
+
+    [Install]
+    WantedBy=multi-user.target
+
+### Timer
+
+    sudo nano /etc/systemd/system/docker-backup.timer
+
+    [Unit]
+    Description=Run Docker Backup Daily at 03:00
+
+    [Timer]
+    OnCalendar=*-*-* 03:00:00
+    Persistent=true
+
+    [Install]
+    WantedBy=timers.target
+
+Activate:
+
+    sudo systemctl daemon-reload
+    sudo systemctl enable --now docker-backup.timer
+
+---
+
+## 7. Useful Commands
+
+Docker container versions:
+
+    for container in $(docker ps --format "{{.Names}}"); do
+      echo -n "$container: "
+      docker inspect -f '{{if index .Config.Labels "org.opencontainers.image.version"}}{{index .Config.Labels "org.opencontainers.image.version"}}{{else if index .Config.Labels "version"}}{{index .Config.Labels "version"}}{{else if index .Config.Labels "build_version"}}{{index .Config.Labels "build_version"}}{{else}}No version label found{{end}}' "$container"
+    done
+
+Docker container IP addresses:
+
+    for container in $(docker ps --format "{{.Names}}"); do
+      echo -n "$container: "
+      docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$container"
+    done
