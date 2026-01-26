@@ -12,6 +12,36 @@ services:
   # --- Other stuff ---        #  
   #                            #
   ##############################
+  # --- Tailscale: Your Secure Entry Point ---
+  tailscale:
+    image: tailscale/tailscale:latest
+    container_name: tailscale
+    hostname: glimby-server
+    network_mode: host # Allows Tailscale to see all local ports
+    environment:
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_USERSPACE=false
+    volumes:
+      - ./tailscale/data:/var/lib/tailscale
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    restart: unless-stopped
+
+  # --- Nginx Proxy Manager: Your Traffic Controller ---
+  npm:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: nginx-proxy-manager
+    restart: unless-stopped
+    ports:
+      - '80:80'   # HTTP
+      - '81:81'   # Admin UI
+      - '443:443' # HTTPS
+    volumes:
+      - ./npm/data:/data
+      - ./npm/letsencrypt:/etc/letsencrypt
+
   # --- Network-wide ad blocker ---
   pihole:
     container_name: pihole
@@ -24,9 +54,9 @@ services:
       - "${SERVER_IP}:53:53/tcp"
       - "${SERVER_IP}:53:53/udp"
       # Default HTTP Port
-      - "80:80/tcp"
+      - "8082:80/tcp"
       # Default HTTPs Port. FTL will generate a self-signed certificate
-      - "443:443/tcp"
+      # - "443:443/tcp"
       # Uncomment the line below if you are using Pi-hole as your DHCP server
       #- "67:67/udp"
       # Uncomment the line below if you are using Pi-hole as your NTP server
@@ -182,6 +212,8 @@ services:
       - HOMEPAGE_VAR_PROWLARR_KEY=${HOMEPAGE_VAR_PROWLARR_KEY}
       - HOMEPAGE_VAR_SPEEDTEST_KEY=${HOMEPAGE_VAR_SPEEDTEST_KEY}
       - HOMEPAGE_VAR_PIHOLE_PASS=${HOMEPAGE_VAR_PIHOLE_PASS}
+      - HOMEPAGE_VAR_NPM_USER=${HOMEPAGE_VAR_NPM_USER}
+      - HOMEPAGE_VAR_NPM_PASS=${HOMEPAGE_VAR_NPM_PASS}
 
   ##############################
   #                            #
@@ -198,6 +230,9 @@ services:
         - 61208:61208
       environment:
         - GLANCES_OPT=-w
+      volumes:
+      - /:/host:ro  # Hiermee ziet Glances je hele systeem als '/host'
+      - /var/run/docker.sock:/var/run/docker.sock:ro
 
   # --- Speedtest Tracker ---
   # Default username/password admin@example.com/password

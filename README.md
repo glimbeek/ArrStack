@@ -24,8 +24,7 @@
       openssh-server \
       unzip \
       nfs-common \
-      sysstat \
-      lm-sensors
+      sysstat
 
 ### 1.3 Hardware Monitoring & Intel GPU Support
 
@@ -39,9 +38,22 @@ Run sensors-detect once and answer YES to all questions.
 
 ### 1.4 Install PowerShell
 
-    sudo apt install -y powershell
+Download the Microsoft repository GPG-keys
+    wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
 
----
+Register the Microsoft repository GPG-keys
+    sudo dpkg -i packages-microsoft-prod.deb
+
+Remove the downloaded file
+    rm packages-microsoft-prod.deb
+
+Update the package list
+    
+    sudo apt update
+
+Install PowerShell
+
+    sudo apt install -y powershell
 
 ## 2. Install Docker & Docker Compose
 
@@ -76,10 +88,6 @@ Run sensors-detect once and answer YES to all questions.
     sudo usermod -aG docker $USER
 
 Log out and back in for this to take effect.
-
-Enable SMART monitoring:
-
-    sudo systemctl enable --now smartd
 
 ### 2.5 NZBget intermediate folder and permissions
 Ensure the directory exists
@@ -146,6 +154,29 @@ Enable and start:
 
 ---
 
+Create mount to media share
+
+    sudo apt update
+    sudo apt install cifs-utils -y
+    sudo nano /etc/fstab
+
+Paste the following at the bottom of the file:
+
+    192.168.0.11:/volume1/StreamingData /mnt/nas_streaming nfs defaults,timeo=900,retrans=5,_netdev 0 0
+
+Run
+    
+    systemctl daemon-reload
+
+Run
+
+    sudo mount -a
+    df
+
+And it should return the following:
+
+    192.168.0.11:/volume1/StreamingData 3836208768 1738826752 2097279616  46% /mnt/nas_streaming
+
 ## 6. Docker Backup (systemd + timer)
 
 ### Backup Script
@@ -199,6 +230,8 @@ To watch exactly what's happening open a second terminal window and run:
 
     sudo nano /etc/systemd/system/docker-backup.service
 
+Script Contents:
+
     [Unit]
     Description=Daily Docker Backup to NAS
     After=network-online.target mnt-nas_streaming.mount
@@ -214,6 +247,8 @@ To watch exactly what's happening open a second terminal window and run:
 ### Timer
 
     sudo nano /etc/systemd/system/docker-backup.timer
+
+Script Contents:
 
     [Unit]
     Description=Run Docker Backup Daily at 03:00
@@ -281,7 +316,40 @@ Script contents:
 
     echo "Restore complete."
 
-## 7. Useful Commands
+## 7. Setup VPN and Reverse Proxy
+
+After launching the tailscale container, run the command:
+
+    docker logs tailscale
+
+Copy the authenticate url, for instance:
+
+    https://login.tailscale.com/a/c30000000000f1asex
+
+Once authenticated, connect the server and your server will have a permanent internal IP (e.g., 100.64.0.5).
+
+Open the NPM admin panel: http://192.168.0.45:81/ and create an admin account.
+
+Add a Proxy Host: Hosts > Proxy Hosts -> Add Proxy Host and enter the details. For example:
+
+Domain Names:
+
+    jellyfin.<Tailnet DNS name>.ts.net
+
+Scheme
+
+    http
+
+Forward Hostname / IP
+
+    jellyfin
+
+Forward Port
+
+    8096
+
+
+## 8. Useful Commands
 
 Docker container versions:
 
@@ -304,3 +372,12 @@ Copy .env file to Linux host
 Start / Stop Message Bot service
 
     sudo systemctl start/stop tgbot.service
+
+Install CURL in a container 
+
+    docker exec -u 0 -it homepage sh
+    apk add curl
+
+Do a HTTP request from a container
+
+    docker exec <container_name> curl -I "<URL>"

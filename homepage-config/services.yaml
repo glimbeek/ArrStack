@@ -125,26 +125,14 @@
         widget:
             type: glances
             url: http://glances:61208
-            metric: disk:sda
+            metric: fs:/host
             version: 4
     - Network Usage:
         widget:
             type: glances
             url: http://192.168.0.45:61208/
-            metric: network:eth
+            metric: network:eth0
             version: 4
-    # - NAS Health:
-    #     widget:
-    #       type: glances
-    #       url: http://glances:61208
-    #       version: 4
-    #       metric: "fs:/nas"
-    - Container Stats:
-        widget:
-          type: glances
-          url: http://glances:61208
-          version: 4
-          metric: processcount
     - DiskStation Status:
         widget:
           type: diskstation
@@ -152,7 +140,8 @@
           username: {{HOMEPAGE_VAR_NAS_USER}}
           password: {{HOMEPAGE_VAR_NAS_PASS}}
           volume: volume_1
-    - Speedtest:
+- Speedtest:
+    - Speedtest Tracker:
         #icon: speedtest-tracker.png
         href: http://192.168.0.45:8080
         widget:
@@ -165,12 +154,19 @@
 - Infrastructure:
     - Pi-hole:
         icon: pi-hole.png
-        href: "http://192.168.0.45/admin"
+        href: "http://192.168.0.45:8082/admin"
         widget:
           type: pihole
           url: "http://pihole" # Use container name if on same network
           version: 6           # CRITICAL for Pi-hole v6
           key: "{{HOMEPAGE_VAR_PIHOLE_PASS}}" # Use the variable from your .env
+
+    - Reverse Proxy:
+        widget:
+            type: npm
+            url: http://192.168.0.45:81 # Het IP van je Linux machine + Admin poort
+            username: {{HOMEPAGE_VAR_NPM_USER}}
+            password: {{HOMEPAGE_VAR_NPM_PASS}}
 
 - Smart Home Sensors:
     - Power Usage:
