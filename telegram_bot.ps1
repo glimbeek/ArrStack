@@ -26,7 +26,7 @@ else {
 $botToken = $env:TG_BOT_TOKEN
 $TelegramApiUri = "https://api.telegram.org/bot" + $botToken
 $ChatID = $env:TG_CHAT_ID
-$AllowedIDs = $env:TG_ALLOWED_IDS
+$AllowedIDs = $AllowedIDs = $env:TG_ALLOWED_IDS.Split(',').Trim()
 $DockerServerLocation = "/home/glimby/docker"
 $LogFile = "/home/glimby/docker/bot_log.txt"
 
@@ -156,9 +156,9 @@ Function Get-TelegramMessages {
             "/disk"     { Get-DiskSpace }
             "/logs" {
                 # Handles "/logs sonarr"
-                $args = $UserMessage.Split(" ")
-                if ($args[1]) { 
-                    $logOutput = Get-ContainerLogs -ContainerName $args[1]
+                $MessageArgs = $UserMessage.Split(" ")
+                if ($MessageArgs[1]) { 
+                    $logOutput = Get-ContainerLogs -ContainerName $MessageArgs[1]
                     Send-TelegramMessage -Message $logOutput -ChatID $ChatID 
                 } 
                 else { 
@@ -167,15 +167,15 @@ Function Get-TelegramMessages {
             }
             "/nzb"      { $msg = Get-NZBGetStatus; Send-TelegramMessage -Message $msg -ChatID $ChatID }
             "/uptime"   { Get-Uptime }
-            "/reboot"   { Check-Reboot }
+            "/reboot"   { Get-Reboot }
             "/rebootnow" { Restart-Server -UserID $TelegramUserId -UserName $TelegramUserFirstName }
             "/restartall" { Restart-Docker }
             "/restart" {
                 # Handles "/restart sonarr"
-                $args = $UserMessage.Split(" ")
-                if ($args[1]) 
+                $MessageArgs = $UserMessage.Split(" ")
+                if ($MessageArgs[1]) 
                 { 
-                    Restart-SingleContainer $args[1] 
+                    Restart-SingleContainer $MessageArgs[1] 
                 } 
                 else 
                 { 
@@ -222,7 +222,7 @@ Function Get-Uptime {
 }
 
 # --- Check if we really want to reboot... --- 
-Function Check-Reboot
+Function Get-Reboot
 {
     Send-TelegramMessage -ChatID $ChatID -Message "Are you sure, if so, type: /rebootnow"
 }
@@ -261,7 +261,7 @@ Function Restart-Server
 }
 
 # --- Manage Docker Stack (Up/Down) ---
-Function Manage-DockerStack
+Function Reset-DockerStack
 {
     param (
         [Parameter(Mandatory)]
@@ -313,8 +313,8 @@ Function Manage-DockerStack
 # --- Restart all Docker containers ---
 Function Restart-Docker
 {
-    Manage-DockerStack -Action Down -Path $DockerServerLocation
-    Manage-DockerStack -Action Up -Path $DockerServerLocation
+    Reset-DockerStack -Action Down -Path $DockerServerLocation
+    Reset-DockerStack -Action Up -Path $DockerServerLocation
 }
 
 # --- Restart a single Docker container ---

@@ -161,3 +161,50 @@
             #version: 2
             key: APItoken
             bitratePrecision: 1 # Show 1 decimal point (e.g., 940.5 Mbps)
+
+- Infrastructure:
+    - Pi-hole:
+        icon: pi-hole.png
+        href: "http://192.168.0.45/admin"
+        widget:
+          type: pihole
+          url: "http://pihole" # Use container name if on same network
+          version: 6           # CRITICAL for Pi-hole v6
+          key: "{{HOMEPAGE_VAR_PIHOLE_PASS}}" # Use the variable from your .env
+
+- Smart Home Sensors:
+    - Power Usage:
+        icon: domoticz.png
+        widget:
+          type: customapi
+          url: "http://192.168.0.45:8081/json.htm?type=command&param=getdevices&rid=1"
+          method: GET
+          mappings:
+            - field: result[0].Usage
+              label: Current
+              format: text
+            - field: result[0].CounterToday
+              label: Today Usage
+              format: text
+            - field: result[0].CounterDelivToday
+              label: Today Return
+              format: text
+            - field: result[0].LastUpdate
+              label: Last Seen
+              format: datetime
+              dateformat: "DD-MM-YYYY HH:mm:ss"
+
+    - Gas Usage:
+        icon: domoticz.png
+        widget:
+          type: customapi
+          url: "http://192.168.0.45:8081/json.htm?type=command&param=getdevices&rid=2"
+          method: GET
+          mappings:
+            - field: result[0].CounterToday
+              label: Today
+              format: text
+            - field: result[0].LastUpdate
+              label: Last Seen
+              format: datetime
+              dateformat: "DD-MM-YYYY HH:mm:ss"

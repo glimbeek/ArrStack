@@ -300,3 +300,7 @@ Docker container IP addresses:
 Copy .env file to Linux host
 
     scp .env glimby@192.168.0.45:/home/glimby/docker/
+
+Start / Stop Message Bot service
+
+    sudo systemctl start/stop tgbot.service
