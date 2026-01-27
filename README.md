@@ -176,7 +176,7 @@ Create mount to media share
 
 Paste the following at the bottom of the file:
 
-    192.168.0.11:/volume1/StreamingData /mnt/nas_streaming nfs defaults,timeo=900,retrans=5,_netdev 0 0
+    192.168.0.11:/volume1/StreamingData /mnt/nas_streaming nfs defaults,timeo=900,retrans=5,_netdev,nofail,x-systemd.automount,x-systemd.device-timeout=10 0 0
 
 Run
     
@@ -191,6 +191,17 @@ And it should return the following:
 
     192.168.0.11:/volume1/StreamingData 3836208768 1738826752 2097279616  46% /mnt/nas_streaming
 
+Make sure Docker starts AFTER the mount is made
+
+    sudo systemctl edit docker.service
+
+Contents:
+
+    [Unit]
+    After=mnt-nas_streaming.mount
+    Requires=mnt-nas_streaming.mount
+
+sudo systemctl daemon-reload
 
 Create Reboot Trigger ACTION Service
 
