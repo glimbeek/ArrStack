@@ -27,8 +27,11 @@ $botToken = $env:TG_BOT_TOKEN
 $TelegramApiUri = "https://api.telegram.org/bot" + $botToken
 $ChatID = $env:TG_CHAT_ID
 $AllowedIDs = $AllowedIDs = $env:TG_ALLOWED_IDS.Split(',').Trim()
+# $DockerServerLocation = "/home/glimby/docker"
+# $LogFile = "/home/glimby/docker/bot_log.txt"
 $DockerServerLocation = "/home/glimby/docker"
-$LogFile = "/home/glimby/docker/bot_log.txt"
+$BotDataLocation = "/home/glimby/docker/telegram-bot"
+$LogFile = "$BotDataLocation/bot_log.txt"
 
 # --- NZBGet Configuration ---
 $NZBGetUrl = $env:TG_NZBGET_URL
@@ -94,7 +97,8 @@ Function Send-TelegramMessage {
 
 # --- To check if their are updates for the Telgram bot --- 
 Function Get-TelegramUpdates() {
-    $OffsetPath = "/home/glimby/docker/tg_offset.txt"
+    # $OffsetPath = "/home/glimby/docker/tg_offset.txt"
+    $OffsetPath = "$BotDataLocation/tg_offset.txt"
 
     if (!(Test-Path $OffsetPath)) {
         New-Item -Path $OffsetPath -ItemType File
@@ -241,7 +245,7 @@ Function Restart-Server
         Send-TelegramMessage -ChatID $ChatID -Message "Host server is being rebooted."  
         
         # Create an empty file acting as the "switch"
-        New-Item -Path "/home/glimby/docker/reboot.trigger" -ItemType File -Force
+        New-Item -Path "$BotDataLocation/reboot.trigger" -ItemType File -Force
 
         # This file is triggers a cronjob
         # * * * * * [ -f /home/glimby/docker/reboot.trigger ] && /usr/bin/rm /home/glimby/docker/reboot.trigger && /usr/sbin/reboot
