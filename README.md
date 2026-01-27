@@ -55,6 +55,20 @@ Install PowerShell
 
     sudo apt install -y powershell
 
+### 1.5 Setup the USB port to receive incoming data from the P1 port
+
+Check if the USB connected
+
+    ls -l /dev/ttyUSB*
+
+Remove braille-service that might hijack the USB
+
+    sudo apt remove brltty -y
+
+Set the correct permissions on the USB port
+
+    sudo chmod 666 /dev/ttyUSB0
+
 ## 2. Install Docker & Docker Compose
 
 ### 2.1 Add Docker GPG Key
@@ -176,6 +190,43 @@ Run
 And it should return the following:
 
     192.168.0.11:/volume1/StreamingData 3836208768 1738826752 2097279616  46% /mnt/nas_streaming
+
+
+Create Reboot Trigger ACTION Service
+
+    sudo nano /etc/systemd/system/reboot-trigger.service
+
+Service contents:
+
+    [Unit]
+    Description=Reboot Service triggered by file
+    After=network.target
+
+    [Service]
+    Type=oneshot
+    ExecStartPre=/usr/bin/rm -f /home/glimby/docker/reboot.trigger
+    ExecStart=/usr/sbin/reboot
+
+Create Reboot Trigger WATCHER Service
+
+    sudo nano /etc/systemd/system/reboot-trigger.path
+
+Service contents:
+
+    [Unit]
+    Description=Monitor for reboot trigger file
+
+    [Path]
+    PathExists=/home/glimby/docker/reboot.trigger
+    Unit=reboot-trigger.service
+
+    [Install]
+    WantedBy=multi-user.target
+
+Active the config
+
+    sudo systemctl daemon-reload
+    sudo systemctl enable --now reboot-trigger.path
 
 ## 6. Docker Backup (systemd + timer)
 

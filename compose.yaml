@@ -100,8 +100,8 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
     # If you have a USB Zigbee/Z-Wave stick, uncomment below:
-    # devices:
-    #   - "/dev/ttyUSB0:/dev/ttyUSB0"
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
 
   ##############################
   #                            #
@@ -233,6 +233,9 @@ services:
       volumes:
       - /:/host:ro  # Hiermee ziet Glances je hele systeem als '/host'
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      network_mode: host
+      devices:
+        - /dev/dri:/dev/dri
 
   # --- Speedtest Tracker ---
   # Default username/password admin@example.com/password

@@ -106,32 +106,32 @@
     - CPU Usage:
         widget:
             type: glances
-            url: http://glances:61208/
+            url: http://192.168.0.45:61208/
             metric: cpu
             version: 4
     - Temperature:
         widget:
             type: glances
-            url: http://glances:61208/
+            url: http://192.168.0.45:61208/
             metric: "sensor:Package id 0"
             version: 4
     - Memory Usage:
         widget:
             type: glances
-            url: http://glances:61208/
+            url: http://192.168.0.45:61208/
             metric: memory
             version: 4
     - Disk Usage:
         widget:
             type: glances
-            url: http://glances:61208
+            url: http://192.168.0.45:61208
             metric: fs:/host
             version: 4
     - Network Usage:
         widget:
             type: glances
             url: http://192.168.0.45:61208/
-            metric: network:eth0
+            metric: network:enp0s31f6 # Make sure this is the correct interface 'ip addr'
             version: 4
     - DiskStation Status:
         widget:
@@ -140,6 +140,7 @@
           username: {{HOMEPAGE_VAR_NAS_USER}}
           password: {{HOMEPAGE_VAR_NAS_PASS}}
           volume: volume_1
+          
 - Speedtest:
     - Speedtest Tracker:
         #icon: speedtest-tracker.png
@@ -164,13 +165,14 @@
     - Reverse Proxy:
         widget:
             type: npm
-            url: http://192.168.0.45:81 # Het IP van je Linux machine + Admin poort
+            url: http://192.168.0.45:81
             username: {{HOMEPAGE_VAR_NPM_USER}}
             password: {{HOMEPAGE_VAR_NPM_PASS}}
 
 - Smart Home Sensors:
     - Power Usage:
         icon: domoticz.png
+        href: http://192.168.0.45:8081/#/Devices/1/Log
         widget:
           type: customapi
           url: "http://192.168.0.45:8081/json.htm?type=command&param=getdevices&rid=1"
@@ -180,10 +182,10 @@
               label: Current
               format: text
             - field: result[0].CounterToday
-              label: Today Usage
+              label: Usage 24h
               format: text
             - field: result[0].CounterDelivToday
-              label: Today Return
+              label: Return 24h
               format: text
             - field: result[0].LastUpdate
               label: Last Seen
@@ -192,13 +194,14 @@
 
     - Gas Usage:
         icon: domoticz.png
+        href: http://192.168.0.45:8081/#/Devices/2/Log
         widget:
           type: customapi
           url: "http://192.168.0.45:8081/json.htm?type=command&param=getdevices&rid=2"
           method: GET
           mappings:
             - field: result[0].CounterToday
-              label: Today
+              label: Usage 24h
               format: text
             - field: result[0].LastUpdate
               label: Last Seen

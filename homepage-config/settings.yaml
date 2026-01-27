@@ -3,22 +3,34 @@
 # https://gethomepage.dev/configs/settings/
 
 layout:
+
   Media Management:
+    header: false
     style: row
     columns: 4
+
   File Management:
-      header: false
-      style: row
-      columns: 3
+    header: false
+    style: row
+    columns: 3
+
   System Monitoring:
     style: row
     columns: 2  # 3x2 grid for the other Glances widgets
-  # Network Health:
-  #     header: false
-  #     style: row             
-  #     columns: 1            
+   
+  Speedtest:
+    header: false
+    style: row
+    columns: 1 
 
-headerStyle: boxedWidgets
+  Infrastructure:
+    style: row
+    columns: 2
+
+  Smart Home Sensors:
+    style: row
+    columns: 2
+
 background:
   image: https://images7.alphacoders.com/601/601841.jpg?auto=format # Terminator
   #image: https://wallpapercave.com/wp/wp6889832.jpg?auto=format # Dune
