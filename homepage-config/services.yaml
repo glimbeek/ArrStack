@@ -3,7 +3,7 @@
 # https://gethomepage.dev/configs/services/
 # https://gethomepage.dev/widgets/services/
 
-- Media Management:
+- Arr Services:
     - Jellyseerr:
         icon: jellyseerr.png
         href: http://192.168.0.45:5055
@@ -49,7 +49,7 @@
           type: bazarr
           url: http://bazarr:6767
           key: {{HOMEPAGE_VAR_BAZARR_KEY}}
-
+    
 - File Management:
     - Prowlarr:
         icon: prowlarr.png
@@ -63,6 +63,31 @@
             url: http://prowlarr:9696
             key: {{HOMEPAGE_VAR_PROWLARR_KEY}}
 
+    - Immich:
+        icon: immich.png
+        href: http://192.168.0.45:2283/  # Replace with your ThinkCentre IP
+        description: Photo and Video Management
+        widget:
+          type: immich
+          url: http://immich_server:2283 # Use the container name if Homepage is in the same Docker network
+          key: {{HOMEPAGE_VAR_IMMICH_KEY}}
+          #fields: ["photos", "videos", "storage"] # Optional: choose what to display
+          version: 2 # Optional: specify API version (default is 1)
+
+    - NZBGet:
+        icon: nzbget.png
+        href: http://192.168.0.45:6789
+        description: Usenet Downloader
+        siteMonitor: http://nzbget:6789
+        server: my-server
+        container: nzbget
+        widget:
+            type: nzbget
+            url: http://nzbget:6789
+            username: {{HOMEPAGE_VAR_NZBGET_USER}}
+            password: {{HOMEPAGE_VAR_NZBGET_PASS}}
+
+- Media Management:
     - Jellyfin:
         icon: jellyfin.png
         href: http://192.168.0.45:8096
@@ -80,19 +105,6 @@
             enableMediaControl: false # optional, defaults to true
             showEpisodeNumber: true # optional, defaults to false
             expandOneStreamToTwoRows: false # optional, defaults to true
-
-    - NZBGet:
-        icon: nzbget.png
-        href: http://192.168.0.45:6789
-        description: Usenet Downloader
-        siteMonitor: http://nzbget:6789
-        server: my-server
-        container: nzbget
-        widget:
-            type: nzbget
-            url: http://nzbget:6789
-            username: {{HOMEPAGE_VAR_NZBGET_USER}}
-            password: {{HOMEPAGE_VAR_NZBGET_PASS}}
 
 # - System Monitoring:
 #     - Glances Full Width:

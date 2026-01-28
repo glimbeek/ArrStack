@@ -5,6 +5,10 @@
 layout:
 
   Media Management:
+    style: row
+    columns: 1
+
+  Arr Services:
     header: false
     style: row
     columns: 4

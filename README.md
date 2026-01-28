@@ -69,6 +69,17 @@ Set the correct permissions on the USB port
 
     sudo chmod 666 /dev/ttyUSB0
 
+
+### 1.6 Disable bluetooth and Wi-Fi to reduce power consumption
+
+Stop and disable bluetooth
+    
+    sudo systemctl stop bluetooth && sudo systemctl disable bluetooth
+
+Disable Wi-Fi
+
+    sudo nmcli radio wifi off
+
 ## 2. Install Docker & Docker Compose
 
 ### 2.1 Add Docker GPG Key
@@ -447,3 +458,15 @@ Do a HTTP request from a container
 Create a container back-up
 
     sudo systemctl start docker-backup.service
+
+Search shell command history
+
+    history | grep "STRING_TO_SEARCH_HERE'
+
+Check GPU Usage: IMC reads/writes
+
+    sudo intel_gpu_top
+
+Check Immich asset count
+
+    docker exec -it immich_postgres psql -U postgres -d immich -c "SELECT count(*) FROM asset;"
