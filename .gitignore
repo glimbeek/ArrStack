@@ -20,3 +20,4 @@ npm/
 
 # allow
 !homepage-config/
+!example.env
