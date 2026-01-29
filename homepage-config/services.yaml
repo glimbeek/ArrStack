@@ -175,6 +175,8 @@
           key: "{{HOMEPAGE_VAR_PIHOLE_PASS}}" # Use the variable from your .env
 
     - Reverse Proxy:
+        icon: npm.png
+        href: "http://192.168.0.45:81/"
         widget:
             type: npm
             url: http://192.168.0.45:81

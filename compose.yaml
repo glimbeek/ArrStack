@@ -14,6 +14,7 @@ services:
   ##############################
   # --- Tailscale: Your Secure Entry Point ---
   tailscale:
+    <<: *lsio-defaults # Use the reusable template
     image: tailscale/tailscale:latest
     container_name: tailscale
     hostname: glimby-server
@@ -27,10 +28,10 @@ services:
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
-    restart: unless-stopped
 
   # --- Nginx Proxy Manager: Your Traffic Controller ---
   npm:
+    <<: *lsio-defaults # Use the reusable template
     image: 'jc21/nginx-proxy-manager:latest'
     container_name: nginx-proxy-manager
     restart: unless-stopped
@@ -84,10 +85,10 @@ services:
       #- SYS_TIME
       # Optional, if Pi-hole should get some more processing time
       #- SYS_NICE
-    restart: unless-stopped
 
 # --- Home Automation ---
   domoticz:
+    <<: *lsio-defaults # Use the reusable template
     image: domoticz/domoticz:stable
     container_name: domoticz
     restart: unless-stopped
@@ -105,6 +106,7 @@ services:
 
 # --- Photo and Video Management ---
   immich-server:
+    <<: *lsio-defaults # Use the reusable template, ignores PUID/PGID
     container_name: immich_server
     image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION}
     devices:
@@ -114,7 +116,7 @@ services:
       - 992
     volumes:
       - ${MEDIA_DIR}/Photos/Immich:/usr/src/app/upload
-      - ${MEDIA_DIR}/Photos/other:/mnt/external_photos:ro
+      - ${MEDIA_DIR}/Photos/other:/mnt/external_photos
       - /etc/localtime:/etc/localtime:ro
     env_file:
       - .env
@@ -123,21 +125,20 @@ services:
     depends_on:
       - redis
       - database
-    restart: always
 
   immich-machine-learning:
+    <<: *lsio-defaults # Use the reusable template
     container_name: immich_machine_learning
     image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION}
     volumes:
       - ./config/immich/model-cache:/cache
     env_file:
       - .env
-    restart: always
 
   redis:
+    <<: *lsio-defaults # Use the reusable template
     container_name: immich_redis
     image: docker.io/redis:${REDIS_VERSION}
-    restart: always
 
   database:
     container_name: immich_postgres
@@ -150,7 +151,7 @@ services:
       POSTGRES_INITDB_ARGS: '--auth-host=scram-sha-256'
     volumes:
       - ./config/immich/postgres:/var/lib/postgresql/data
-    restart: always
+    restart: unless-stopped
 
   ##############################
   #                            #
