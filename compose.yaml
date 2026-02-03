@@ -212,8 +212,26 @@ services:
     ports:
       - 8989:8989
 
+# --- Search Aggregator ---
+  huntarr:
+    <<: *lsio-defaults # Use the reusable template
+    image: ghcr.io/plexguide/huntarr:${HUNTARR_VERSION}
+    container_name: huntarr
+    ports:
+      - 9705:9705
+    volumes:
+      - ./config/huntarr:/config
+    # # Labels for Homepage Discovery
+    # labels:
+    #   - homepage.group=Arr Services
+    #   - homepage.name=Huntarr
+    #   - homepage.icon=huntarr.png
+    #   - homepage.href=http://${SERVER_IP}:8000
+    #   - homepage.description=Search Aggregator
+    #   - homepage.server=my-docker
+    #   - homepage.container=huntarr
+
 # --- Quality Profile Manager ---
-#
 # https://dictionarry.dev/
   profilarr:
     <<: *lsio-defaults # Use the reusable template
