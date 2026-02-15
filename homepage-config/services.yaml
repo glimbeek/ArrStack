@@ -1,21 +1,21 @@
 ---
 # For configuration options and examples, please see:
 # https://gethomepage.dev/configs/services/
-# https://gethomepage.dev/widgets/services/
+# https://gethomepage.dev/widgets/services/ 
 
 - Arr Services:
-    - Jellyseerr:
+    - Seerr:
         icon: jellyseerr.png
         href: http://192.168.0.45:5055
         description: Media Request Manager
-        siteMonitor: http://jellyseerr:5055
+        siteMonitor: http://seerr:5055
         server: my-server
-        container: jellyseerr
+        container: seerr
         show_version: true
         widget:
           type: jellyseerr
-          url: http://jellyseerr:5055
-          key: {{HOMEPAGE_VAR_JELLYSEERR_KEY}}
+          url: http://seerr:5055
+          key: {{HOMEPAGE_VAR_SEERR_KEY}}
     - Radarr:
         icon: radarr.png
         href: http://192.168.0.45:7878        
