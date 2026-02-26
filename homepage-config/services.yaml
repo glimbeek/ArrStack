@@ -45,13 +45,6 @@
         siteMonitor: http://profilarr:6868
         server: my-server
         container: profilarr
-    - Huntarr:
-        icon: huntarr.png
-        href: http://192.168.0.45:9705
-        description: Media Search Aggregator
-        siteMonitor: http://huntarr:9705
-        server: my-server
-        container: huntarr
     - Bazarr:
         icon: bazarr.png
         href: http://192.168.0.45:6767
@@ -63,8 +56,6 @@
           type: bazarr
           url: http://bazarr:6767
           key: {{HOMEPAGE_VAR_BAZARR_KEY}}
-    
-- File Management:
     - Prowlarr:
         icon: prowlarr.png
         href: http://192.168.0.45:9696
@@ -76,11 +67,13 @@
             type: prowlarr
             url: http://prowlarr:9696
             key: {{HOMEPAGE_VAR_PROWLARR_KEY}}
-
+    
+- File Management:
     - Immich:
         icon: immich.png
         href: http://192.168.0.45:2283/  # Replace with your ThinkCentre IP
         description: Photo and Video Management
+        siteMonitor: http://immich_server:2283
         widget:
           type: immich
           url: http://immich_server:2283 # Use the container name if Homepage is in the same Docker network
@@ -179,6 +172,8 @@
     - Speedtest Tracker:
         #icon: speedtest-tracker.png
         href: http://192.168.0.45:8080
+        description: Internet speed tester
+        siteMonitor: http://192.168.0.45:8080
         widget:
             type: speedtest
             url: http://192.168.0.45:8080
@@ -190,6 +185,8 @@
     - Pi-hole:
         icon: pi-hole.png
         href: "http://192.168.0.45:8082/admin"
+        description: Ad- and tracker-blocking application
+        siteMonitor: http://pihole
         widget:
           type: pihole
           url: "http://pihole" # Use container name if on same network
@@ -199,6 +196,10 @@
     - Reverse Proxy:
         icon: npm.png
         href: "http://192.168.0.45:81/"
+        description: Reverser Proxy Manager
+        siteMonitor: http://192.168.0.45:80
+        server: my-server
+        container: nginx-proxy-manager
         widget:
             type: npm
             url: http://192.168.0.45:81
