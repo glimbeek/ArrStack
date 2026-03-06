@@ -1,5 +1,5 @@
 ﻿# --- Load Secrets from .env file ---
-$envFile = "/home/glimby/docker/.env" 
+$envFile = "/home/glimby/docker/arrstack/.env" 
 
 if (Test-Path $envFile) {
     Get-Content $envFile | Where-Object { $_ -match '=' -and $_ -notmatch '^\s*#' } | ForEach-Object {
@@ -29,8 +29,8 @@ $ChatID = $env:TG_CHAT_ID
 $AllowedIDs = $AllowedIDs = $env:TG_ALLOWED_IDS.Split(',').Trim()
 # $DockerServerLocation = "/home/glimby/docker"
 # $LogFile = "/home/glimby/docker/bot_log.txt"
-$DockerServerLocation = "/home/glimby/docker"
-$BotDataLocation = "/home/glimby/docker/telegram-bot"
+$DockerServerLocation = "/home/glimby/docker/arrstack"
+$BotDataLocation = "/home/glimby/docker/arrstack/telegram-bot"
 $LogFile = "$BotDataLocation/bot_log.txt"
 
 # --- NZBGet Configuration ---

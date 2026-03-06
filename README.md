@@ -163,11 +163,11 @@ Service contents:
 
     [Service]
     Type=simple
-    ExecStart=/opt/microsoft/powershell/7/pwsh -File /home/glimby/docker/telegram_bot.ps1
+    ExecStart=/opt/microsoft/powershell/7/pwsh -File /home/glimby/docker/arrstack/telegram_bot.ps1
     Restart=always
     RestartSec=10
     User=glimby
-    WorkingDirectory=/home/glimby/docker
+    WorkingDirectory=/home/glimby/docker/arrstack
 
     [Install]
     WantedBy=multi-user.target
@@ -226,7 +226,7 @@ Service contents:
 
     [Service]
     Type=oneshot
-    ExecStartPre=/usr/bin/rm -f /home/glimby/docker/reboot.trigger
+    ExecStartPre=/usr/bin/rm -f /home/glimby/docker/arrstack/reboot.trigger
     ExecStart=/usr/sbin/reboot
 
 Create Reboot Trigger WATCHER Service
@@ -239,7 +239,7 @@ Service contents:
     Description=Monitor for reboot trigger file
 
     [Path]
-    PathExists=/home/glimby/docker/reboot.trigger
+    PathExists=/home/glimby/docker/arrstack/reboot.trigger
     Unit=reboot-trigger.service
 
     [Install]
@@ -254,7 +254,7 @@ Active the config
 
 ### Backup Script
 
-    nano /home/glimby/docker/backup_docker.sh
+    nano /home/glimby/docker/arrstack/backup_docker.sh
 
 Script contents:
 
@@ -312,7 +312,7 @@ Script Contents:
     [Service]
     Type=oneshot
     User=glimby
-    ExecStart=/home/glimby/docker/backup_docker.sh
+    ExecStart=/home/glimby/docker/arrstack/backup_docker.sh
 
     [Install]
     WantedBy=multi-user.target
