@@ -37,6 +37,10 @@ layout:
     style: row
     columns: 2
 
+  Webhosting:
+    style: row
+    columns: 2
+
 background:
   image: https://images7.alphacoders.com/601/601841.jpg?auto=format # Terminator
   #image: https://wallpapercave.com/wp/wp6889832.jpg?auto=format # Dune

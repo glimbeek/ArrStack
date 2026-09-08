@@ -252,3 +252,46 @@
               label: Last Seen
               format: datetime
               dateformat: "DD-MM-YYYY HH:mm:ss"
+
+- Webhosting:
+    - Pensioen:
+        href: http://192.168.0.45:1387/
+        description: ""
+        server: my-docker
+        container: pensioen
+        showStats: true
+
+    - Simon:
+        href: http://192.168.0.45:1377/
+        description: ""
+        server: my-docker
+        container: simon
+        showStats: true
+
+    - Alexpastoor v4 (WordPress):
+        href: http://192.168.0.45:1229/
+        description: ""
+        server: my-docker
+        container: webhosting-alexpastoorv4-1
+        showStats: true
+
+    - Collectie Kranenborg v1:
+        href: http://192.168.0.45:1319/
+        description: "host POORT → container POORT"
+        server: my-docker
+        container: collectiekranenborgv1
+        showStats: true
+
+    - Bruno Bobbink:
+        href: http://192.168.0.45:1338/
+        description: ""
+        server: my-docker
+        container: brunobobbink
+        showStats: true
+
+    - Bruno Bobbink v2:
+        href: http://192.168.0.45:1349/
+        description: ""
+        server: my-docker
+        container: brunobobbinkv2              
+        showStats: true
