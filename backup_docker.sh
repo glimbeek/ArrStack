@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 #
-# backup_docker.sh — backup van beide Docker-stacks naar een lokale restic-repo,
-# met opportunistische sync naar de NAS zodra die aan staat.
+# backup_docker.sh — backup van beide Docker-stacks naar een lokale restic-repo.
+#
+# Draait dagelijks om 03:00 via docker-backup.timer.
+# De NAS-sync zit in een apart script (sync_backup_nas.sh) omdat de NAS
+# 's nachts uit staat; het blokje onderaan hier is alleen meegenomen voor
+# het geval de NAS toevallig wél aan is.
 #
 set -euo pipefail
 
@@ -61,7 +65,7 @@ command -v restic >/dev/null || fail "restic niet geïnstalleerd (apt install re
 
 restic cat config >/dev/null 2>&1 || fail "restic-repo niet bereikbaar. Eerst: restic init"
 
-# De ongecomprimeerde Immich-dump is ~6 GB, dus ruime marge eisen.
+# De ongecomprimeerde Immich-dump is enkele GB's, dus ruime marge eisen.
 FREE_GB=$(df --output=avail -BG / | tail -1 | tr -dc '0-9')
 (( FREE_GB > 20 )) || fail "te weinig vrije ruimte: ${FREE_GB}G"
 
@@ -72,11 +76,14 @@ log "===== Backup gestart ====="
 
 # ---------------- 1. Dumps, terwijl alles nog draait ----------------
 
-# Immich Postgres. De PGDATA-map (5,8 GB) slaan we over; deze dump
-# vervangt hem. Bewust NIET gecomprimeerd: restic doet dat zelf en kan
-# dan dedupliceren op de daadwerkelijk gewijzigde delen. Een gzip-bestand
-# verandert vanaf de eerste gewijzigde byte volledig, waardoor restic
-# elke dag de hele 637 MB opnieuw zou wegschrijven.
+# Immich Postgres. De PGDATA-map (5,8 GB) wordt uitgesloten; deze dump
+# vervangt hem. Bewust NIET gecomprimeerd: restic comprimeert zelf en kan
+# dan dedupliceren op alleen de gewijzigde delen. Bij een gzip-bestand
+# verandert vanaf de eerste gewijzigde byte de hele stream, waardoor restic
+# elke dag opnieuw de volledige dump zou wegschrijven.
+#
+# De gebruikersnaam komt uit de draaiende container, niet uit .env — daar
+# staat inline commentaar achter de waarde, wat een grep meepakt.
 if docker compose -f "$ARRSTACK" ps --services --status running 2>/dev/null | grep -qx database; then
     log "pg_dump Immich"
     DB_USER=$(docker compose -f "$ARRSTACK" exec -T database printenv POSTGRES_USER | tr -d '\r')
@@ -132,7 +139,7 @@ restic backup \
     "$SOURCE_DIR" "$DUMP_DIR"
 RC=$?
 set -e
-# exit 1 = klaar met waarschuwingen (bv. een bestand dat verdween). Acceptabel.
+# exit 1 = klaar met waarschuwingen (bv. een bestand dat tijdens de run verdween).
 (( RC <= 1 )) || fail "restic backup mislukt (exit $RC)"
 log "Backup klaar"
 
@@ -153,18 +160,17 @@ restic forget \
     --keep-monthly "$KEEP_MONTHLY" \
     --prune || log "WAARSCHUWING: forget/prune mislukt"
 
-# ---------------- 6. NAS-sync, alleen als hij aan is ----------------
-# Elke nacht proberen in plaats van een vaste woensdag: zo profiteer je
-# van élke keer dat de NAS toevallig aan staat.
+# ---------------- 6. NAS-sync als hij toevallig aan is ----------------
+# De echte sync draait via sync_backup_nas.sh / nas-sync.timer.
 log "NAS bereikbaar?"
 if ping -c1 -W2 "$NAS_IP" >/dev/null 2>&1; then
-    ls "$NAS_MOUNT" >/dev/null 2>&1 || true      # triggert de automount
+    ls "$NAS_MOUNT" >/dev/null 2>&1 || true
     sleep 2
     if mountpoint -q "$NAS_MOUNT"; then
         log "NAS aan, kopiëren"
         mkdir -p "$NAS_REPO"
-        # De repo is versleuteld, dus rsync ervan is veilig.
-        rsync -a --delete "${RESTIC_REPOSITORY}/" "${NAS_REPO}/" \
+        # -rlptD i.p.v. -a: NFS root squash weigert chown, waardoor -a faalt.
+        rsync -rlptD --delete "${RESTIC_REPOSITORY}/" "${NAS_REPO}/" \
             && log "NAS-sync klaar ($(du -sh "$NAS_REPO" | cut -f1))" \
             || log "WAARSCHUWING: NAS-sync mislukt"
     else
